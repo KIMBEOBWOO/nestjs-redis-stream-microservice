@@ -1,13 +1,5 @@
-import { Deserializer, Serializer } from '@nestjs/microservices';
-import {
-  OutboundRedisStreamMessageSerializationOption,
-  RedisStreamIncommingRequest,
-} from './interface';
-import {
-  RedisStreamData,
-  RedisStreamMessage,
-  RedisStreamMessageProperty,
-} from './redis-stream.interface';
+import { Deserializer } from '@nestjs/microservices';
+import { RedisStreamData, RedisStreamIncommingRequest, RedisStreamMessage } from '../common';
 
 export class InboundRedisStreamMessageDeserializer implements Deserializer {
   deserialize(
@@ -46,25 +38,5 @@ export class InboundRedisStreamMessageDeserializer implements Deserializer {
       data,
       correlationId,
     };
-  }
-}
-
-export class OutboundRedisStreamMessageSerializer implements Serializer {
-  serialize(
-    value: any,
-    options?: OutboundRedisStreamMessageSerializationOption,
-  ): RedisStreamMessageProperty[] | Promise<RedisStreamMessageProperty[]> {
-    const data = Object.entries(value).reduce((acc, [key, val]) => {
-      acc.push(key);
-      acc.push(JSON.stringify(val));
-      return acc;
-    }, []);
-
-    if (options?.correlationId) {
-      data.push('correlationId');
-      data.push(options.correlationId);
-    }
-
-    return data;
   }
 }

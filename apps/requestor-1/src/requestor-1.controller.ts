@@ -20,10 +20,8 @@ export class Requestor1Controller {
       },
     };
 
-    setInterval(() => {
-      console.log('Emitting data to stream-1 ', new Date().toLocaleTimeString());
-      this.clientProxy.emit('stream-1', data);
-    }, 1000);
+    console.log('Emitting data to stream-1 ', new Date().toLocaleTimeString());
+    this.clientProxy.emit('stream-1', data);
   }
 
   @Get('test/send')
@@ -38,10 +36,27 @@ export class Requestor1Controller {
       },
     };
 
-    setInterval(async () => {
-      const res$ = this.clientProxy.send('stream-1', data).pipe(timeout(10000));
-      const res = await firstValueFrom(res$);
-      console.log('Response from stream-1: ', res);
-    }, 1000);
+    const res$ = this.clientProxy.send('stream-1', data).pipe(timeout(10000));
+    const res = await firstValueFrom(res$);
+    return res;
+  }
+
+  @Get('test/send/stream')
+  async testSendStream() {
+    const data = {
+      type: 'SEND',
+      name: 'beobwoo',
+      age: 27,
+      profile: {
+        company: 'bubblecloud.io',
+        position: 'developer',
+      },
+    };
+
+    console.log('Sending data to stream-2', new Date().toLocaleTimeString());
+    const res$ = this.clientProxy.send('stream-2', data).pipe(timeout(10000));
+    const res = await firstValueFrom(res$);
+
+    return res;
   }
 }

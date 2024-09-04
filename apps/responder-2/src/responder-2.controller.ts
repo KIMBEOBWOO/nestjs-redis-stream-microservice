@@ -14,4 +14,21 @@ export class Responder2Controller {
       age: 27,
     });
   }
+
+  @MessagePattern('stream-2')
+  async consumeStream2(@Payload() data: any) {
+    console.log('[stream-2] Respond Handler', data);
+
+    return of([
+      {
+        type: 'Responder 1',
+        idx: 1,
+      },
+      {
+        type: 'Responder 1',
+        name: 'beobwoo',
+        idx: 2,
+      },
+    ]);
+  }
 }
