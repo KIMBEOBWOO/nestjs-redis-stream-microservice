@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/nestjs-redis-stream-microservice/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/nestjs-redis-stream-microservice/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/nestjs-redis-stream-microservice",
+  "projects": {
+    "responder-1": {
+      "type": "application",
+      "root": "apps/responder-1",
+      "entryFile": "main",
+      "sourceRoot": "apps/responder-1/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/responder-1/tsconfig.app.json"
+      }
+    },
+    "redis-streams": {
+      "type": "library",
+      "root": "libs/redis-streams",
+      "entryFile": "index",
+      "sourceRoot": "libs/redis-streams/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/redis-streams/tsconfig.lib.json"
+      }
+    },
+    "requestor-1": {
+      "type": "application",
+      "root": "apps/requestor-1",
+      "entryFile": "main",
+      "sourceRoot": "apps/requestor-1/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/requestor-1/tsconfig.app.json"
+      }
+    },
+    "requestor-2": {
+      "type": "application",
+      "root": "apps/requestor-2",
+      "entryFile": "main",
+      "sourceRoot": "apps/requestor-2/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/requestor-2/tsconfig.app.json"
+      }
+    },
+    "responder-2": {
+      "type": "application",
+      "root": "apps/responder-2",
+      "entryFile": "main",
+      "sourceRoot": "apps/responder-2/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/responder-2/tsconfig.app.json"
+      }
+    }
+  }
+}
