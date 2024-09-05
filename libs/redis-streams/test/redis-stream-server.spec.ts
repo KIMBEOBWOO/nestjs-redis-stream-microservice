@@ -7,7 +7,7 @@ import {
   OutboundRedisStreamMessageSerializer,
   RedisStreamServer,
   XReadGroupResponse,
-} from '@lib/redis-streams';
+} from '../src/index';
 
 jest.mock('@lib/redis-streams/redis-stream-manager', () => {
   return {
@@ -104,7 +104,7 @@ describe('RedisStreamServer', () => {
       const listenToStreamSpy = jest.spyOn(server as any, 'listenToStream').mockResolvedValue(null);
       const onConnectSpy = jest
         .spyOn(server['controlManager'], 'onConnect')
-        .mockImplementation((callback) => callback());
+        .mockImplementation((callback: any) => callback());
 
       // when
       server.listen(callback);
@@ -282,6 +282,7 @@ describe('RedisStreamServer', () => {
         id: 'message1',
         pattern: 'stream1',
         data: 'data1',
+        correlationId: 'correlationId',
       };
       jest.spyOn(server['deserializer'], 'deserialize').mockReturnValue(incommingMessage);
       const ackSpy = jest.spyOn(server['clientManager'], 'ack');
@@ -312,7 +313,7 @@ describe('RedisStreamServer', () => {
       expect(serializerSpy).toHaveBeenCalledTimes(xreadGroupResponse.length);
       xreadGroupResponse.forEach(() =>
         expect(serializerSpy).toHaveBeenCalledWith(writePacket.response, {
-          correlationId: undefined,
+          correlationId: 'correlationId',
         }),
       );
 

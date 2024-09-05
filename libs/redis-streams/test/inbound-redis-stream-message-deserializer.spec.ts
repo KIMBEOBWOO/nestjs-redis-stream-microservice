@@ -2,7 +2,7 @@ import {
   DEFAULT_LIB_MESSAGE_HEADER,
   InboundRedisStreamMessageDeserializer,
   RedisStreamData,
-} from '@lib/redis-streams';
+} from '../src/index';
 
 describe('InboundRedisStreamMessageDeserializer', () => {
   let deserializer: InboundRedisStreamMessageDeserializer;

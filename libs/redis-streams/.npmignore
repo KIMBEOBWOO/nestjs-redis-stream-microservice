@@ -1,0 +1,17 @@
+# source
+test
+src
+
+# misc
+.github
+.commitlintrc.json
+.release-it.json
+.eslintignore
+.eslintrc.js
+renovate.json
+.prettierignore
+.prettierrc
+publish.sh
+tsconfig.json
+tsconfig.build.json
+tsconfig.lib.json

@@ -3,6 +3,8 @@
 /node_modules
 /build
 /redis
+/**/node_modules/
+/**/dist/
 
 # Logs
 logs

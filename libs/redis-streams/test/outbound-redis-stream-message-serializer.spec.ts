@@ -1,7 +1,4 @@
-import {
-  DEFAULT_LIB_MESSAGE_HEADER,
-  OutboundRedisStreamMessageSerializer,
-} from '@lib/redis-streams';
+import { DEFAULT_LIB_MESSAGE_HEADER, OutboundRedisStreamMessageSerializer } from '../src/index';
 
 describe('OutboundRedisStreamMessageSerializer', () => {
   let serializer: OutboundRedisStreamMessageSerializer;

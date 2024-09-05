@@ -10,7 +10,7 @@ const mockRedis = {
   disconnect: jest.fn(),
 };
 
-import { RedisStreamManager } from '@lib/redis-streams';
+import { RedisStreamManager } from '../src/index';
 
 jest.mock('ioredis', () => ({
   __esModule: true,

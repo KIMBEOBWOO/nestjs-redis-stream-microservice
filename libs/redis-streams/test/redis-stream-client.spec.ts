@@ -1,5 +1,5 @@
 import { MockRedisStreamManager } from './mocks';
-import { ConstructorOptions, RedisStreamClient, RedisStreamManager } from '@lib/redis-streams';
+import { ConstructorOptions, RedisStreamClient, RedisStreamManager } from '../src/index';
 
 jest.mock('@lib/redis-streams/redis-stream-manager', () => {
   return {

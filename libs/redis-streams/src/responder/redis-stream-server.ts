@@ -80,10 +80,12 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
           this.clientManager.ack(incommingMessage, this.options.streams.consumerGroup);
           if (!packet) return;
 
-          const payload = await this.serializer.serialize(packet.response, {
-            correlationId: incommingMessage.correlationId,
-          });
-          await this.clientManager.add(this.responseStream, ...payload);
+          if (incommingMessage.correlationId) {
+            const payload = await this.serializer.serialize(packet.response, {
+              correlationId: incommingMessage.correlationId,
+            });
+            await this.clientManager.add(this.responseStream, ...payload);
+          }
         };
 
         const response$ = this.transformToObservable(originHandler(incommingMessage.data, ctx));

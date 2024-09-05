@@ -17,10 +17,6 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
-    "paths": {
-      "@lib/redis-streams": ["libs/redis-streams/src"],
-      "@lib/redis-streams/*": ["libs/redis-streams/src/*"]
-    }
+    "noFallthroughCasesInSwitch": false
   }
 }
