@@ -3,7 +3,7 @@ import { ClientProxy, ReadPacket, WritePacket } from '@nestjs/microservices';
 import { CONNECT_EVENT, ERROR_EVENT } from '@nestjs/microservices/constants';
 import { firstValueFrom, share } from 'rxjs';
 import { v4 } from 'uuid';
-import { ClientConstructorOptions } from '../common';
+import { ClientConstructorOptions, DEFAULT_RESPONSE_STREAM } from '../common';
 import { RedisStreamManager } from '../redis-stream-manager';
 import {
   InboundRedisStreamMessageDeserializer,
@@ -35,7 +35,7 @@ export class RedisStreamClient extends ClientProxy {
 
     this.callBackMap = new Map();
     this.consumerGroup = v4();
-    this.responseStream = 'res-stream';
+    this.responseStream = DEFAULT_RESPONSE_STREAM;
 
     this.initManager();
   }
@@ -132,6 +132,7 @@ export class RedisStreamClient extends ClientProxy {
 
   close() {
     this.controlManager.disconnect();
+    this.clientManager.disconnect();
     this.controlManager = null;
     this.connection = null;
     this.callBackMap.clear();

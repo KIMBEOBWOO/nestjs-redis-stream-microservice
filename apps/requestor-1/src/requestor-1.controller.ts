@@ -11,14 +11,21 @@ export class Requestor1Controller {
 
   @Get('test/emit')
   testEmit() {
-    const data = {
-      name: 'beobwoo',
-      age: 27,
-      profile: {
-        company: 'bubblecloud.io',
-        position: 'developer',
+    const data = [
+      {
+        name: 'A',
+        age: 27,
+        profile: {
+          position: 'dev',
+        },
       },
-    };
+      {
+        name: 'B',
+        profile: {
+          position: 'dev',
+        },
+      },
+    ];
 
     console.log('Emitting data to stream-1 ', new Date().toLocaleTimeString());
     this.clientProxy.emit('stream-1', data);
@@ -27,12 +34,26 @@ export class Requestor1Controller {
   @Get('test/send')
   async testSend() {
     const data = {
-      type: 'SEND',
-      name: 'beobwoo',
-      age: 27,
-      profile: {
-        company: 'bubblecloud.io',
-        position: 'developer',
+      // type: 'SEND',
+      // name: 'beobwoo',
+      // age: 27,
+      // profile: {
+      //   company: 'bubblecloud.io',
+      //   position: 'developer',
+      // },
+      0: 'type',
+      1: 'SEND',
+      2: {
+        0: 'name',
+        1: 'beobwoo',
+        2: 'age',
+        3: 27,
+        4: {
+          0: 'company',
+          1: 'bubblecloud.io',
+          2: 'position',
+          3: 'developer',
+        },
       },
     };
 
@@ -42,20 +63,35 @@ export class Requestor1Controller {
   }
 
   @Get('test/send/stream')
-  async testSendStream() {
-    const data = {
-      type: 'SEND',
-      name: 'beobwoo',
-      age: 27,
-      profile: {
-        company: 'bubblecloud.io',
-        position: 'developer',
+  async testSendArray() {
+    const data = [
+      {
+        idx: 1,
+        type: 'SEND',
+        name: 'beobwoo',
+        age: 27,
+        profile: {
+          company: 'bubblecloud.io',
+          position: 'developer',
+        },
       },
-    };
+      {
+        idx: 2,
+        type: 'SEND',
+        name: 'beobwoo',
+        age: 27,
+        profile: {
+          company: 'bubblecloud.io',
+          position: 'developer',
+        },
+      },
+    ];
 
     console.log('Sending data to stream-2', new Date().toLocaleTimeString());
     const res$ = this.clientProxy.send('stream-2', data).pipe(timeout(10000));
     const res = await firstValueFrom(res$);
+
+    console.log('Received data from stream-2', res);
 
     return res;
   }

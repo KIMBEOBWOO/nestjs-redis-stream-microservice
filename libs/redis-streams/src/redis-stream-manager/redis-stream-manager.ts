@@ -4,14 +4,14 @@ import { Redis } from 'ioredis';
 import {
   RedisConnectionOptions,
   RedisInstance,
-  RedisStreamMessageProperty,
-  XReadGroupRawResult,
+  RedisStreamRawMessagePayload,
+  XReadGroupResponse,
 } from '../common';
 
 export class RedisStreamManager {
-  private redis: RedisInstance;
+  protected redis: RedisInstance;
 
-  private constructor(option: RedisConnectionOptions) {
+  protected constructor(option: RedisConnectionOptions) {
     this.redis = new Redis(option);
   }
 
@@ -62,7 +62,7 @@ export class RedisStreamManager {
     return this.redis.xack(stream, consumerGroup, incommingMessage.id);
   }
 
-  public add(stream: string, ...data: RedisStreamMessageProperty[]) {
+  public add(stream: string, ...data: RedisStreamRawMessagePayload) {
     return this.redis.xadd(stream, '*', ...data);
   }
 
@@ -74,7 +74,7 @@ export class RedisStreamManager {
       block: 0,
       count: 1,
     },
-  ): Promise<XReadGroupRawResult | null | undefined> {
+  ): Promise<XReadGroupResponse | null | undefined> {
     return this.redis.xreadgroup(
       'GROUP',
       consumerGroup,
@@ -86,6 +86,6 @@ export class RedisStreamManager {
       'STREAMS',
       ...streams,
       ...streams.map(() => '>'),
-    ) as Promise<XReadGroupRawResult | null | undefined>;
+    ) as Promise<XReadGroupResponse | null | undefined>;
   }
 }

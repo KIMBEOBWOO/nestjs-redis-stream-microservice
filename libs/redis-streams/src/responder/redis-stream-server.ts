@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { CustomTransportStrategy, Server, WritePacket } from '@nestjs/microservices';
-import { ConstructorOptions } from '../common';
+import { ConstructorOptions, DEFAULT_RESPONSE_STREAM } from '../common';
 import { RedisStreamManager } from '../redis-stream-manager';
 import {
   InboundRedisStreamMessageDeserializer,
@@ -17,7 +17,7 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
 
   constructor(private readonly options: ConstructorOptions) {
     super();
-    this.responseStream = 'res-stream';
+    this.responseStream = DEFAULT_RESPONSE_STREAM;
     this.initializeDeserializer({
       deserializer: new InboundRedisStreamMessageDeserializer(),
     });
@@ -77,8 +77,9 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
         if (!originHandler) continue;
 
         const responseCallBack = async (packet: WritePacket) => {
-          if (!packet) return;
           this.clientManager.ack(incommingMessage, this.options.streams.consumerGroup);
+          if (!packet) return;
+
           const payload = await this.serializer.serialize(packet.response, {
             correlationId: incommingMessage.correlationId,
           });
