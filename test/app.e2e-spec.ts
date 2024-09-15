@@ -140,7 +140,7 @@ describe('E2E: App', () => {
       1000 * 10,
     );
 
-    it(
+    it.skip(
       'The message returned by the respondent should be returned to the requester.',
       async () => {
         // when

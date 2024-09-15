@@ -11,6 +11,7 @@
     "start:dev": "nest start --watch",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:set-up": "bash ./scripts/test-set-up.sh",
     "test:e2e": "jest --config ./jest-e2e.config.js"
   },
   "dependencies": {

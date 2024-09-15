@@ -1,11 +1,10 @@
 import { MockRedisStreamManager } from './mocks';
 
 import {
-  ConstructorOptions,
-  DEFAULT_RESPONSE_STREAM,
   InboundRedisStreamMessageDeserializer,
   OutboundRedisStreamMessageSerializer,
   RedisStreamServer,
+  ServerConstructorOptions,
   XReadGroupResponse,
 } from '../src/index';
 
@@ -15,14 +14,17 @@ jest.mock('@lib/redis-streams/redis-stream-manager', () => {
   };
 });
 
-const options: ConstructorOptions = {
+const options: ServerConstructorOptions = {
   connection: {
     host: 'localhost',
     port: 6379,
   },
-  streams: {
+  inboundStream: {
     consumerGroup: 'cg',
     consumer: 'c1',
+  },
+  outboundStream: {
+    stream: 'response-stream',
   },
 };
 
@@ -65,14 +67,6 @@ describe('RedisStreamServer', () => {
       // then
       expect(initSpy).toHaveBeenCalledTimes(2);
       expect(initSpy).toHaveBeenCalledWith(options.connection);
-    });
-
-    it('should set responseStream to DEFAULT_RESPONSE_STREAM', () => {
-      // when
-      const server = new RedisStreamServer(options as any);
-
-      // then
-      expect(server['responseStream']).toBe(DEFAULT_RESPONSE_STREAM);
     });
 
     it('should set logger', () => {
@@ -319,7 +313,7 @@ describe('RedisStreamServer', () => {
 
       expect(addSpy).toHaveBeenCalledTimes(xreadGroupResponse.length);
       xreadGroupResponse.forEach(() =>
-        expect(addSpy).toHaveBeenCalledWith(DEFAULT_RESPONSE_STREAM, 'key1', 'data1'),
+        expect(addSpy).toHaveBeenCalledWith('response-stream', 'key1', 'data1'),
       );
     });
   });

@@ -3,7 +3,7 @@ import { ClientProxy, ReadPacket, WritePacket } from '@nestjs/microservices';
 import { CONNECT_EVENT, ERROR_EVENT } from '@nestjs/microservices/constants';
 import { firstValueFrom, share } from 'rxjs';
 import { v4 } from 'uuid';
-import { ClientConstructorOptions, DEFAULT_RESPONSE_STREAM } from '../common';
+import { ClientConstructorOptions } from '../common';
 import { RedisStreamManager } from '../redis-stream-manager';
 import {
   InboundRedisStreamMessageDeserializer,
@@ -17,8 +17,6 @@ export class RedisStreamClient extends ClientProxy {
   protected connection: Promise<any> | null = null;
 
   private callBackMap: Map<string, (packet: WritePacket) => void>;
-  private consumerGroup: string;
-  private responseStream: string;
 
   private clientManager: RedisStreamManager;
   private controlManager: RedisStreamManager;
@@ -34,8 +32,6 @@ export class RedisStreamClient extends ClientProxy {
     });
 
     this.callBackMap = new Map();
-    this.consumerGroup = v4();
-    this.responseStream = DEFAULT_RESPONSE_STREAM;
 
     this.initManager();
   }
@@ -43,7 +39,10 @@ export class RedisStreamClient extends ClientProxy {
   initManager() {
     this.controlManager = RedisStreamManager.init(this.options.connection);
     this.controlManager.onConnect(() => {
-      this.controlManager.createConsumerGroup(this.responseStream, this.consumerGroup);
+      this.controlManager.createConsumerGroup(
+        this.options.inboundStream.stream,
+        this.options.inboundStream.consumerGroup,
+      );
       this.listenToStream();
     });
     this.controlManager.onError((e: Error) => {
@@ -86,10 +85,10 @@ export class RedisStreamClient extends ClientProxy {
 
   private async listenToStream(): Promise<any> {
     try {
-      const streamKeys = [this.responseStream];
+      const streamKeys = [this.options.inboundStream.stream];
       const rawResults = await this.controlManager.readGroup(
-        this.consumerGroup,
-        'consumer',
+        this.options.inboundStream.consumerGroup,
+        this.options.inboundStream.consumer,
         streamKeys,
       );
 
@@ -116,7 +115,7 @@ export class RedisStreamClient extends ClientProxy {
         });
 
         this.callBackMap.delete(correlationId);
-        this.clientManager.ack(incommingMessage, this.consumerGroup);
+        this.clientManager.ack(incommingMessage, this.options.inboundStream.consumerGroup);
       }
 
       return this.listenToStream();

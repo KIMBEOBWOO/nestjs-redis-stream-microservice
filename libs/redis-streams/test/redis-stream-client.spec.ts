@@ -1,5 +1,5 @@
 import { MockRedisStreamManager } from './mocks';
-import { ConstructorOptions, RedisStreamClient, RedisStreamManager } from '../src/index';
+import { ClientConstructorOptions, RedisStreamClient, RedisStreamManager } from '../src/index';
 
 jest.mock('@lib/redis-streams/redis-stream-manager', () => {
   return {
@@ -13,14 +13,15 @@ jest.mock('uuid', () => {
   };
 });
 
-const options: ConstructorOptions = {
+const options: ClientConstructorOptions = {
   connection: {
     host: 'localhost',
     port: 6379,
   },
-  streams: {
+  inboundStream: {
     consumerGroup: 'cg',
     consumer: 'c1',
+    stream: 'response-stream',
   },
 };
 

@@ -13,10 +13,12 @@ async function bootstrap() {
         port: 6388,
         password: 'beobwoo',
       },
-      streams: {
-        consumerGroup: 'beobwoo',
-        consumer: 'c1',
-        deleteMessagesAfterAck: true,
+      inboundStream: {
+        consumerGroup: 'responder',
+        consumer: 'responder-1',
+      },
+      outboundStream: {
+        stream: 'response-stream',
       },
     }),
   });
