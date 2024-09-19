@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, OnApplicationShutdown } from '@nestjs/common';
 import { ClientProxy, ReadPacket, WritePacket } from '@nestjs/microservices';
 import { CONNECT_EVENT, ERROR_EVENT } from '@nestjs/microservices/constants';
 import { firstValueFrom, share } from 'rxjs';
@@ -10,29 +10,25 @@ import {
   OutboundRedisStreamMessageSerializer,
 } from '../serializer';
 
-export class RedisStreamClient extends ClientProxy {
+export class RedisStreamClient extends ClientProxy implements OnApplicationShutdown {
   protected override deserializer: InboundRedisStreamMessageDeserializer;
   protected override serializer: OutboundRedisStreamMessageSerializer;
   protected readonly logger = new Logger(RedisStreamClient.name);
   protected connection: Promise<any> | null = null;
 
   private callBackMap: Map<string, (packet: WritePacket) => void>;
-
   private clientManager: RedisStreamManager;
   private controlManager: RedisStreamManager;
 
   constructor(private readonly options: ClientConstructorOptions) {
     super();
-
     this.initializeDeserializer({
       deserializer: new InboundRedisStreamMessageDeserializer(),
     });
     this.initializeSerializer({
       serializer: new OutboundRedisStreamMessageSerializer(),
     });
-
     this.callBackMap = new Map();
-
     this.initManager();
   }
 
@@ -40,8 +36,8 @@ export class RedisStreamClient extends ClientProxy {
     this.controlManager = RedisStreamManager.init(this.options.connection);
     this.controlManager.onConnect(() => {
       this.controlManager.createConsumerGroup(
-        this.options.inboundStream.stream,
-        this.options.inboundStream.consumerGroup,
+        this.options.inbound.stream,
+        this.options.inbound.consumerGroup,
       );
       this.listenToStream();
     });
@@ -85,10 +81,10 @@ export class RedisStreamClient extends ClientProxy {
 
   private async listenToStream(): Promise<any> {
     try {
-      const streamKeys = [this.options.inboundStream.stream];
+      const streamKeys = [this.options.inbound.stream];
       const rawResults = await this.controlManager.readGroup(
-        this.options.inboundStream.consumerGroup,
-        this.options.inboundStream.consumer,
+        this.options.inbound.consumerGroup,
+        this.options.inbound.consumer,
         streamKeys,
       );
 
@@ -115,7 +111,7 @@ export class RedisStreamClient extends ClientProxy {
         });
 
         this.callBackMap.delete(correlationId);
-        this.clientManager.ack(incommingMessage, this.options.inboundStream.consumerGroup);
+        this.clientManager.ack(incommingMessage, this.options.inbound.consumerGroup);
       }
 
       return this.listenToStream();
@@ -130,10 +126,35 @@ export class RedisStreamClient extends ClientProxy {
   }
 
   close() {
-    this.controlManager.disconnect();
-    this.clientManager.disconnect();
-    this.controlManager = null;
     this.connection = null;
     this.callBackMap.clear();
+  }
+
+  async onApplicationShutdown() {
+    try {
+      // close the control manager connection immediatly (for shutdown xgroupread)
+      this.controlManager.disconnect();
+
+      if (this.options.inbound.deleteConsumerGroupOnClose) {
+        await this.clientManager.deleteConsumerGroup(
+          this.options.inbound.stream,
+          this.options.inbound.consumerGroup,
+        );
+      }
+
+      if (this.options.inbound.deleteConsumerGroupOnClose) {
+        await this.clientManager.deleteConsumer(
+          this.options.inbound.stream,
+          this.options.inbound.consumerGroup,
+          this.options.inbound.consumer,
+        );
+      }
+
+      // close the control manager connection immediatly
+      this.clientManager.disconnect();
+      this.close();
+    } catch (e) {
+      this.logger.error(e);
+    }
   }
 }

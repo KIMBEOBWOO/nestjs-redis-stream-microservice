@@ -13,15 +13,17 @@ async function bootstrap() {
         port: 6388,
         password: 'beobwoo',
       },
-      inboundStream: {
+      inbound: {
         consumerGroup: 'responder',
         consumer: 'responder-1',
+        deleteConsumerOnClose: true,
       },
-      outboundStream: {
+      outbound: {
         stream: 'response-stream',
       },
     }),
   });
+  app.enableShutdownHooks();
 
   Logger.debug('[RES 1] is running on http://localhost:3080');
 

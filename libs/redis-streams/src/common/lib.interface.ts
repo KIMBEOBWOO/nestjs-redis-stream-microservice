@@ -11,7 +11,7 @@ export interface ConstructorOptions {
   connection: RedisConnectionOptions;
 }
 
-interface InboundRedisStreamOptions {
+interface ConsumerOption {
   /**
    * block time in milliseconds
    * - 0: block infinitely
@@ -41,9 +41,21 @@ interface InboundRedisStreamOptions {
    * - if false, messages will not be deleted after they are acknowledged, developer will have to manually delete the messages
    */
   deleteMessagesAfterAck?: boolean;
+  /**
+   * delete consumer group on close
+   * - if true, the consumer group will be deleted when the server is closed
+   * - if false, the consumer group will not be deleted when the server is closed (manual deletion is required)
+   */
+  deleteConsumerGroupOnClose?: boolean;
+  /**
+   * delete consumer on close
+   * - if true, the consumer will be deleted when the server is closed
+   * - if false, the consumer will not be deleted when the server is closed (manual deletion is required)
+   */
+  deleteConsumerOnClose?: boolean;
 }
 
-interface OutboundRedisStreamOptions {
+interface StreamOption {
   /**
    * stream name
    * @see [redis-stream](https://redis.io/docs/latest/develop/data-types/streams/)
@@ -51,26 +63,22 @@ interface OutboundRedisStreamOptions {
   stream: string;
 }
 
-interface ClientInboundRedisStreamOptions
-  extends InboundRedisStreamOptions,
-    OutboundRedisStreamOptions {}
-
 export interface ServerConstructorOptions extends ConstructorOptions {
   /**
    * Settings for the request stream that the server is listening to
    */
-  inboundStream: InboundRedisStreamOptions;
+  inbound: ConsumerOption;
   /**
    * Response stream settings for which the server will return data
    */
-  outboundStream: OutboundRedisStreamOptions;
+  outbound: StreamOption;
 }
 
 export interface ClientConstructorOptions extends ConstructorOptions {
   /**
    * Settings for streams that the server responded to
    */
-  inboundStream: ClientInboundRedisStreamOptions;
+  inbound: ConsumerOption & StreamOption;
 }
 
 export interface RedisStreamIncommingRequest extends IncomingRequest {

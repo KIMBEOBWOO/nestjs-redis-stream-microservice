@@ -31,7 +31,7 @@ export class RedisStreamManager {
     });
   }
 
-  async close() {
+  close() {
     return this.redis.quit();
   }
 
@@ -39,7 +39,7 @@ export class RedisStreamManager {
     this.redis.disconnect();
   }
 
-  public async createConsumerGroup(stream: string, consumerGroup: string): Promise<void> {
+  async createConsumerGroup(stream: string, consumerGroup: string): Promise<void> {
     try {
       await this.redis.xgroup('CREATE', stream, consumerGroup, '$', 'MKSTREAM');
     } catch (e) {
@@ -53,20 +53,25 @@ export class RedisStreamManager {
     }
   }
 
-  public ack(
-    incommingMessage: IncomingRequest | IncomingEvent,
-    consumerGroup: string,
-  ): Promise<number> {
+  async deleteConsumerGroup(stream: string, consumerGroup: string): Promise<void> {
+    await this.redis.xgroup('DESTROY', stream, consumerGroup);
+  }
+
+  async deleteConsumer(stream: string, consumerGroup: string, consumer: string): Promise<void> {
+    await this.redis.xgroup('DELCONSUMER', stream, consumerGroup, consumer);
+  }
+
+  ack(incommingMessage: IncomingRequest | IncomingEvent, consumerGroup: string): Promise<number> {
     if (!('id' in incommingMessage)) return;
     const stream = incommingMessage.pattern;
     return this.redis.xack(stream, consumerGroup, incommingMessage.id);
   }
 
-  public add(stream: string, ...data: RedisStreamRawMessagePayload) {
+  add(stream: string, ...data: RedisStreamRawMessagePayload) {
     return this.redis.xadd(stream, '*', ...data);
   }
 
-  public async readGroup(
+  async readGroup(
     consumerGroup: string,
     consumer: string,
     streams: string[],

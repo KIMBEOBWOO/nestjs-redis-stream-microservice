@@ -19,11 +19,11 @@ const options: ServerConstructorOptions = {
     host: 'localhost',
     port: 6379,
   },
-  inboundStream: {
+  inbound: {
     consumerGroup: 'cg',
     consumer: 'c1',
   },
-  outboundStream: {
+  outbound: {
     stream: 'response-stream',
   },
 };
@@ -319,13 +319,72 @@ describe('RedisStreamServer', () => {
   });
 
   describe('close', () => {
-    it('should call quit on controlManager', async () => {
+    it('should call disconnect on controlManager', async () => {
       // when
       await server.close();
 
       // then
-      expect(server['controlManager'].close).toHaveBeenCalledTimes(1);
-      expect(server['clientManager'].close).toHaveBeenCalledTimes(1);
+      expect(server['controlManager'].disconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call disconnect on clientManager', async () => {
+      // when
+      await server.close();
+
+      // then
+      expect(server['clientManager'].disconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call deleteConsumerGroup on clientManager if deleteConsumerGroupOnClose is true', async () => {
+      // given
+      server['options']['inbound'] = {
+        ...server['options']['inbound'],
+        deleteConsumerGroupOnClose: true,
+      };
+      const deleteConsumerGroupSpy = jest.spyOn(server['clientManager'], 'deleteConsumerGroup');
+
+      // when
+      await server.close();
+
+      // then
+      expect(deleteConsumerGroupSpy).toHaveBeenCalledTimes(messageHandlers.size);
+      Array.from(messageHandlers.keys()).forEach((val) =>
+        expect(deleteConsumerGroupSpy).toHaveBeenCalledWith(val, 'cg'),
+      );
+    });
+
+    it('should call deleteConsumer on clientManager if deleteConsumerOnClose is true', async () => {
+      // given
+      server['options']['inbound'] = {
+        ...server['options']['inbound'],
+        deleteConsumerOnClose: true,
+      };
+      const deleteConsumerSpy = jest.spyOn(server['clientManager'], 'deleteConsumer');
+
+      // when
+      await server.close();
+
+      // then
+      expect(deleteConsumerSpy).toHaveBeenCalledTimes(messageHandlers.size);
+      Array.from(messageHandlers.keys()).forEach((val) =>
+        expect(deleteConsumerSpy).toHaveBeenCalledWith(val, 'cg', 'c1'),
+      );
+    });
+
+    it('should call logger.error if any error', async () => {
+      // given
+      const error = new Error('TEST_ERROR');
+      jest.spyOn(server['controlManager'], 'disconnect').mockImplementation(() => {
+        throw error;
+      });
+      const loggerSpy = jest.spyOn(server['logger'], 'error');
+
+      // when
+      await server.close();
+
+      // then
+      expect(loggerSpy).toHaveBeenCalledTimes(1);
+      expect(loggerSpy).toHaveBeenCalledWith(error);
     });
   });
 });

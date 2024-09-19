@@ -24,6 +24,8 @@ export class MockRedisStreamManager {
   onError = jest.fn();
 
   createConsumerGroup = jest.fn().mockResolvedValue(null);
+  deleteConsumerGroup = jest.fn().mockResolvedValue(null);
+  deleteConsumer = jest.fn().mockResolvedValue(null);
   close = jest.fn().mockResolvedValue(null);
   disconnect = jest.fn().mockResolvedValue(null);
   ack = jest.fn().mockResolvedValue(null);

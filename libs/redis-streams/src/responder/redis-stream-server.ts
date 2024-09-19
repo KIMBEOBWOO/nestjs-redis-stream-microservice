@@ -46,7 +46,7 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
   private async bindHandlers() {
     try {
       const streamKeys = Array.from(this.messageHandlers.keys());
-      const consumerGroup = this.options.inboundStream.consumerGroup;
+      const consumerGroup = this.options.inbound.consumerGroup;
       await Promise.all(
         streamKeys.map((stream) => this.controlManager.createConsumerGroup(stream, consumerGroup)),
       );
@@ -58,8 +58,8 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
   private async listenToStream() {
     try {
       const rawResults = await this.controlManager.readGroup(
-        this.options.inboundStream.consumerGroup,
-        this.options.inboundStream.consumer,
+        this.options.inbound.consumerGroup,
+        this.options.inbound.consumer,
         Array.from(this.messageHandlers.keys()),
       );
 
@@ -75,14 +75,14 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
         if (!originHandler) continue;
 
         const responseCallBack = async (packet: WritePacket) => {
-          this.clientManager.ack(incommingMessage, this.options.inboundStream.consumerGroup);
+          this.clientManager.ack(incommingMessage, this.options.inbound.consumerGroup);
           if (!packet) return;
 
           if (incommingMessage.correlationId) {
             const payload = await this.serializer.serialize(packet.response, {
               correlationId: incommingMessage.correlationId,
             });
-            await this.clientManager.add(this.options.outboundStream.stream, ...payload);
+            await this.clientManager.add(this.options.outbound.stream, ...payload);
           }
         };
 
@@ -97,7 +97,29 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
   }
 
   async close() {
-    await this.clientManager.close();
-    await this.controlManager.close();
+    try {
+      this.controlManager.disconnect();
+      const streams = Array.from(this.messageHandlers.keys());
+
+      if (this.options.inbound.deleteConsumerOnClose) {
+        for await (const stream of streams) {
+          await this.clientManager.deleteConsumer(
+            stream,
+            this.options.inbound.consumerGroup,
+            this.options.inbound.consumer,
+          );
+        }
+      }
+
+      if (this.options.inbound.deleteConsumerGroupOnClose) {
+        for await (const stream of streams) {
+          await this.clientManager.deleteConsumerGroup(stream, this.options.inbound.consumerGroup);
+        }
+      }
+
+      this.clientManager.disconnect();
+    } catch (e) {
+      this.logger.error(e);
+    }
   }
 }
