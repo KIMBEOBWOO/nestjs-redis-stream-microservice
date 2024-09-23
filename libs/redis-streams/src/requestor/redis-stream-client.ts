@@ -3,7 +3,11 @@ import { ClientProxy, ReadPacket, WritePacket } from '@nestjs/microservices';
 import { CONNECT_EVENT, ERROR_EVENT } from '@nestjs/microservices/constants';
 import { firstValueFrom, share } from 'rxjs';
 import { v4 } from 'uuid';
-import { ClientConstructorOptions } from '../common';
+import {
+  ClientConstructorOptions,
+  ClientConsumerOption,
+  DEFAULT_LIB_RESPONSE_STREAM,
+} from '../common';
 import { RedisStreamManager } from '../redis-stream-manager';
 import {
   InboundRedisStreamMessageDeserializer,
@@ -19,8 +23,9 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
   private callBackMap: Map<string, (packet: WritePacket) => void>;
   private clientManager: RedisStreamManager;
   private controlManager: RedisStreamManager;
+  private options: ClientConsumerOption;
 
-  constructor(private readonly options: ClientConstructorOptions) {
+  constructor(private readonly constructorOption: ClientConstructorOptions) {
     super();
     this.initializeDeserializer({
       deserializer: new InboundRedisStreamMessageDeserializer(),
@@ -29,15 +34,22 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
       serializer: new OutboundRedisStreamMessageSerializer(),
     });
     this.callBackMap = new Map();
+    this.options = {
+      block: this.constructorOption?.option?.block,
+      consumerGroup: v4(),
+      consumer: v4(),
+    };
     this.initManager();
   }
 
   initManager() {
-    this.controlManager = RedisStreamManager.init(this.options.connection);
+    this.controlManager = RedisStreamManager.init(this.constructorOption.connection);
+    this.clientManager = RedisStreamManager.init(this.constructorOption.connection);
+
     this.controlManager.onConnect(() => {
       this.controlManager.createConsumerGroup(
-        this.options.inbound.stream,
-        this.options.inbound.consumerGroup,
+        DEFAULT_LIB_RESPONSE_STREAM,
+        this.options.consumerGroup,
       );
       this.listenToStream();
     });
@@ -45,7 +57,6 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
       this.logger.error('Error connecting to Redis : ' + e);
       this.close();
     });
-    this.clientManager = RedisStreamManager.init(this.options.connection);
   }
 
   async connect(): Promise<any> {
@@ -81,10 +92,10 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
 
   private async listenToStream(): Promise<any> {
     try {
-      const streamKeys = [this.options.inbound.stream];
+      const streamKeys = [DEFAULT_LIB_RESPONSE_STREAM];
       const rawResults = await this.controlManager.readGroup(
-        this.options.inbound.consumerGroup,
-        this.options.inbound.consumer,
+        this.options.consumerGroup,
+        this.options.consumer,
         streamKeys,
       );
 
@@ -111,7 +122,7 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
         });
 
         this.callBackMap.delete(correlationId);
-        this.clientManager.ack(incommingMessage, this.options.inbound.consumerGroup);
+        this.clientManager.ack(incommingMessage, this.options.consumerGroup);
       }
 
       return this.listenToStream();
@@ -135,20 +146,16 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
       // close the control manager connection immediatly (for shutdown xgroupread)
       this.controlManager.disconnect();
 
-      if (this.options.inbound.deleteConsumerGroupOnClose) {
-        await this.clientManager.deleteConsumerGroup(
-          this.options.inbound.stream,
-          this.options.inbound.consumerGroup,
-        );
-      }
+      await this.clientManager.deleteConsumerGroup(
+        DEFAULT_LIB_RESPONSE_STREAM,
+        this.options.consumerGroup,
+      );
 
-      if (this.options.inbound.deleteConsumerGroupOnClose) {
-        await this.clientManager.deleteConsumer(
-          this.options.inbound.stream,
-          this.options.inbound.consumerGroup,
-          this.options.inbound.consumer,
-        );
-      }
+      await this.clientManager.deleteConsumer(
+        DEFAULT_LIB_RESPONSE_STREAM,
+        this.options.consumerGroup,
+        this.options.consumer,
+      );
 
       // close the control manager connection immediatly
       this.clientManager.disconnect();

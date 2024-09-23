@@ -1,6 +1,11 @@
 import { Logger } from '@nestjs/common';
 import { CustomTransportStrategy, Server, WritePacket } from '@nestjs/microservices';
-import { ServerConstructorOptions } from '../common';
+import { v4 } from 'uuid';
+import {
+  DEFAULT_LIB_RESPONSE_STREAM,
+  ServerConstructorOptions,
+  ServerConsumerOption,
+} from '../common';
 import { RedisStreamManager } from '../redis-stream-manager';
 import {
   InboundRedisStreamMessageDeserializer,
@@ -13,8 +18,9 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
 
   protected override deserializer: InboundRedisStreamMessageDeserializer;
   protected override serializer: OutboundRedisStreamMessageSerializer;
+  private options: ServerConsumerOption;
 
-  constructor(private readonly options: ServerConstructorOptions) {
+  constructor(private readonly constructorOption: ServerConstructorOptions) {
     super();
     this.initializeDeserializer({
       deserializer: new InboundRedisStreamMessageDeserializer(),
@@ -22,10 +28,18 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
     this.initializeSerializer({
       serializer: new OutboundRedisStreamMessageSerializer(),
     });
-    (this.logger as any) = new Logger(RedisStreamServer.name);
+    (this.logger as unknown) = new Logger(RedisStreamServer.name);
 
-    this.controlManager = RedisStreamManager.init(options.connection);
-    this.clientManager = RedisStreamManager.init(options.connection);
+    this.controlManager = RedisStreamManager.init(this.constructorOption.connection);
+    this.clientManager = RedisStreamManager.init(this.constructorOption.connection);
+
+    this.options = {
+      block: this.constructorOption?.option?.block,
+      consumerGroup: this.constructorOption.option.consumerGroup,
+      consumer: v4(),
+      deleteConsumerGroupOnClose: true,
+      deleteConsumerOnClose: true,
+    };
   }
 
   listen(callback: () => void) {
@@ -46,9 +60,10 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
   private async bindHandlers() {
     try {
       const streamKeys = Array.from(this.messageHandlers.keys());
-      const consumerGroup = this.options.inbound.consumerGroup;
       await Promise.all(
-        streamKeys.map((stream) => this.controlManager.createConsumerGroup(stream, consumerGroup)),
+        streamKeys.map((stream) =>
+          this.controlManager.createConsumerGroup(stream, this.options.consumerGroup),
+        ),
       );
     } catch (e) {
       this.logger.error(e);
@@ -58,8 +73,8 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
   private async listenToStream() {
     try {
       const rawResults = await this.controlManager.readGroup(
-        this.options.inbound.consumerGroup,
-        this.options.inbound.consumer,
+        this.options.consumerGroup,
+        this.options.consumer,
         Array.from(this.messageHandlers.keys()),
       );
 
@@ -75,14 +90,14 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
         if (!originHandler) continue;
 
         const responseCallBack = async (packet: WritePacket) => {
-          this.clientManager.ack(incommingMessage, this.options.inbound.consumerGroup);
+          this.clientManager.ack(incommingMessage, this.options.consumerGroup);
           if (!packet) return;
 
           if (incommingMessage.correlationId) {
             const payload = await this.serializer.serialize(packet.response, {
               correlationId: incommingMessage.correlationId,
             });
-            await this.clientManager.add(this.options.outbound.stream, ...payload);
+            await this.clientManager.add(DEFAULT_LIB_RESPONSE_STREAM, ...payload);
           }
         };
 
@@ -101,21 +116,21 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
       this.controlManager.disconnect();
       const streams = Array.from(this.messageHandlers.keys());
 
-      if (this.options.inbound.deleteConsumerOnClose) {
+      if (this.options.deleteConsumerOnClose) {
         for await (const stream of streams) {
           await this.clientManager.deleteConsumer(
             stream,
-            this.options.inbound.consumerGroup,
-            this.options.inbound.consumer,
+            this.options.consumerGroup,
+            this.options.consumer,
           );
         }
       }
 
-      if (this.options.inbound.deleteConsumerGroupOnClose) {
-        for await (const stream of streams) {
-          await this.clientManager.deleteConsumerGroup(stream, this.options.inbound.consumerGroup);
-        }
-      }
+      // if (this.options.deleteConsumerGroupOnClose) {
+      //   for await (const stream of streams) {
+      //     await this.clientManager.deleteConsumerGroup(stream, this.options.consumerGroup);
+      //   }
+      // }
 
       this.clientManager.disconnect();
     } catch (e) {

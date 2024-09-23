@@ -1,5 +1,10 @@
 import { MockRedisStreamManager } from './mocks';
-import { ClientConstructorOptions, RedisStreamClient, RedisStreamManager } from '../src/index';
+import {
+  ClientConstructorOptions,
+  DEFAULT_LIB_RESPONSE_STREAM,
+  RedisStreamClient,
+  RedisStreamManager,
+} from '../src/index';
 
 jest.mock('@lib/redis-streams/redis-stream-manager', () => {
   return {
@@ -9,7 +14,7 @@ jest.mock('@lib/redis-streams/redis-stream-manager', () => {
 
 jest.mock('uuid', () => {
   return {
-    v4: jest.fn().mockReturnValue('test-consumer-group'),
+    v4: jest.fn().mockReturnValue('test-uuid'),
   };
 });
 
@@ -17,11 +22,6 @@ const options: ClientConstructorOptions = {
   connection: {
     host: 'localhost',
     port: 6379,
-  },
-  inbound: {
-    consumerGroup: 'cg',
-    consumer: 'c1',
-    stream: 'response-stream',
   },
 };
 
@@ -92,7 +92,7 @@ describe('RedisStreamClient', () => {
 
       // then
       expect(sendToStreamSpy).toHaveBeenCalled();
-      expect(sendToStreamSpy).toHaveBeenCalledWith(packet, 'test-consumer-group');
+      expect(sendToStreamSpy).toHaveBeenCalledWith(packet, 'test-uuid');
     });
 
     it('should set callback in callBackMap', async () => {
@@ -211,7 +211,7 @@ describe('RedisStreamClient', () => {
 
       // then
       expect(deleteConsumerGroupSpy).toHaveBeenCalledTimes(1);
-      expect(deleteConsumerGroupSpy).toHaveBeenCalledWith('response-stream', 'cg');
+      expect(deleteConsumerGroupSpy).toHaveBeenCalledWith(DEFAULT_LIB_RESPONSE_STREAM, 'test-uuid');
     });
 
     it('should call deleteConsumer on clientManager if deleteConsumerOnClose is true', async () => {
@@ -227,7 +227,11 @@ describe('RedisStreamClient', () => {
 
       // then
       expect(deleteConsumerSpy).toHaveBeenCalledTimes(1);
-      expect(deleteConsumerSpy).toHaveBeenCalledWith('response-stream', 'cg', 'c1');
+      expect(deleteConsumerSpy).toHaveBeenCalledWith(
+        DEFAULT_LIB_RESPONSE_STREAM,
+        'test-uuid',
+        'test-uuid',
+      );
     });
 
     it('should call logger.error if any error', async () => {

@@ -11,7 +11,7 @@ export interface ConstructorOptions {
   connection: RedisConnectionOptions;
 }
 
-interface ConsumerOption {
+export interface ConsumerOption {
   /**
    * block time in milliseconds
    * - 0: block infinitely
@@ -29,56 +29,35 @@ interface ConsumerOption {
    */
   consumerGroup: string;
   /**
-   * consumer name
-   * @see [redis-stream](https://redis.io/docs/latest/develop/data-types/streams/#consumer-groups)
-   * - should be unique within the consumer group, even if the distributed nestjs application is running multiple instances
-   */
-  consumer: string;
-  /**
-   * delete messages after ack
-   * @see [xack](https://redis.io/docs/latest/commands/xack/)
-   * - if true, messages will be deleted after they are acknowledged
-   * - if false, messages will not be deleted after they are acknowledged, developer will have to manually delete the messages
-   */
-  deleteMessagesAfterAck?: boolean;
-  /**
    * delete consumer group on close
    * - if true, the consumer group will be deleted when the server is closed
    * - if false, the consumer group will not be deleted when the server is closed (manual deletion is required)
+   * @default true
    */
   deleteConsumerGroupOnClose?: boolean;
   /**
    * delete consumer on close
    * - if true, the consumer will be deleted when the server is closed
    * - if false, the consumer will not be deleted when the server is closed (manual deletion is required)
+   * @default true
    */
   deleteConsumerOnClose?: boolean;
 }
 
-interface StreamOption {
-  /**
-   * stream name
-   * @see [redis-stream](https://redis.io/docs/latest/develop/data-types/streams/)
-   */
-  stream: string;
+export interface ClientConsumerOption extends ConsumerOption {
+  consumer: string;
+}
+
+export interface ServerConsumerOption extends ConsumerOption {
+  consumer: string;
 }
 
 export interface ServerConstructorOptions extends ConstructorOptions {
-  /**
-   * Settings for the request stream that the server is listening to
-   */
-  inbound: ConsumerOption;
-  /**
-   * Response stream settings for which the server will return data
-   */
-  outbound: StreamOption;
+  option: ConsumerOption;
 }
 
 export interface ClientConstructorOptions extends ConstructorOptions {
-  /**
-   * Settings for streams that the server responded to
-   */
-  inbound: ConsumerOption & StreamOption;
+  option?: Pick<ConsumerOption, 'block'>;
 }
 
 export interface RedisStreamIncommingRequest extends IncomingRequest {

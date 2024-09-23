@@ -14,12 +14,6 @@ import { Requestor2Controller } from './requestor-2.controller';
             port: 6388,
             password: 'beobwoo',
           },
-          inbound: {
-            stream: 'response-stream',
-            consumerGroup: 'requestor-2',
-            consumer: 'requestor',
-            deleteConsumerGroupOnClose: true,
-          },
         });
       },
     },
