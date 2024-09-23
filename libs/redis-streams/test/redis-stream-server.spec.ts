@@ -322,20 +322,20 @@ describe('RedisStreamServer', () => {
   });
 
   describe('close', () => {
-    it('should call disconnect on controlManager', async () => {
+    it('should call close on controlManager', async () => {
       // when
       await server.close();
 
       // then
-      expect(server['controlManager'].disconnect).toHaveBeenCalledTimes(1);
+      expect(server['controlManager'].close).toHaveBeenCalledTimes(1);
     });
 
-    it('should call disconnect on clientManager', async () => {
+    it('should call close on clientManager', async () => {
       // when
       await server.close();
 
       // then
-      expect(server['clientManager'].disconnect).toHaveBeenCalledTimes(1);
+      expect(server['clientManager'].close).toHaveBeenCalledTimes(1);
     });
 
     it.skip('should call deleteConsumerGroup on clientManager if deleteConsumerGroupOnClose is true', async () => {
@@ -377,7 +377,7 @@ describe('RedisStreamServer', () => {
     it('should call logger.error if any error', async () => {
       // given
       const error = new Error('TEST_ERROR');
-      jest.spyOn(server['controlManager'], 'disconnect').mockImplementation(() => {
+      jest.spyOn(server['controlManager'], 'close').mockImplementation(() => {
         throw error;
       });
       const loggerSpy = jest.spyOn(server['logger'], 'error');

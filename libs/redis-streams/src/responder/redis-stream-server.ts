@@ -113,7 +113,7 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
 
   async close() {
     try {
-      this.controlManager.disconnect();
+      this.controlManager.close();
       const streams = Array.from(this.messageHandlers.keys());
 
       if (this.options.deleteConsumerOnClose) {
@@ -125,14 +125,7 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
           );
         }
       }
-
-      // if (this.options.deleteConsumerGroupOnClose) {
-      //   for await (const stream of streams) {
-      //     await this.clientManager.deleteConsumerGroup(stream, this.options.consumerGroup);
-      //   }
-      // }
-
-      this.clientManager.disconnect();
+      this.clientManager.close();
     } catch (e) {
       this.logger.error(e);
     }

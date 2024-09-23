@@ -14,7 +14,7 @@ async function bootstrap() {
         password: 'beobwoo',
       },
       option: {
-        consumerGroup: 'test-app',
+        consumerGroup: 'my-server',
       },
     }),
   });
