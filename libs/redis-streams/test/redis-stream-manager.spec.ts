@@ -105,7 +105,9 @@ describe('RedisStreamManager', () => {
       // given
       const stream = 'stream';
       const consumerGroup = 'consumerGroup';
-      mockRedis.xgroup.mockRejectedValue(new Error('BUSYGROUP Consumer Group name already exists'));
+      mockRedis.xgroup.mockRejectedValueOnce(
+        new Error('BUSYGROUP Consumer Group name already exists'),
+      );
 
       // when
       expect(() => manager.createConsumerGroup(stream, consumerGroup)).not.toThrow();
@@ -115,7 +117,7 @@ describe('RedisStreamManager', () => {
       // given
       const stream = 'stream';
       const consumerGroup = 'consumerGroup';
-      mockRedis.xgroup.mockRejectedValue(new Error('Unexpected error'));
+      mockRedis.xgroup.mockRejectedValueOnce(new Error('Unexpected error'));
 
       // when
       expect(() => manager.createConsumerGroup(stream, consumerGroup)).rejects.toThrowError(
@@ -223,6 +225,35 @@ describe('RedisStreamManager', () => {
         '>',
         '>',
       );
+    });
+  });
+
+  describe('deleteConsumerGroup', () => {
+    it('should call redis.xgroup', async () => {
+      // given
+      const stream = 'stream';
+      const consumerGroup = 'consumerGroup';
+
+      // when
+      await manager.deleteConsumerGroup(stream, consumerGroup);
+
+      // then
+      expect(mockRedis.xgroup).toHaveBeenCalledWith('DESTROY', stream, consumerGroup);
+    });
+  });
+
+  describe('deleteConsumer', () => {
+    it('should call redis.xgroup', async () => {
+      // given
+      const stream = 'stream';
+      const consumerGroup = 'consumerGroup';
+      const consumer = 'consumer';
+
+      // when
+      await manager.deleteConsumer(stream, consumerGroup, consumer);
+
+      // then
+      expect(mockRedis.xgroup).toHaveBeenCalledWith('DELCONSUMER', stream, consumerGroup, consumer);
     });
   });
 });
