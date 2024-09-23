@@ -143,6 +143,8 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
 
   async onApplicationShutdown() {
     try {
+      this.controlManager.disconnect();
+
       // should call deleteConsumer before deleteConsumerGroup
       await this.clientManager.deleteConsumer(
         DEFAULT_LIB_RESPONSE_STREAM,
@@ -155,9 +157,8 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
         this.options.consumerGroup,
       );
 
-      this.close();
       this.clientManager.disconnect();
-      this.controlManager.disconnect();
+      this.close();
     } catch (e) {
       this.logger.error(e);
     }
