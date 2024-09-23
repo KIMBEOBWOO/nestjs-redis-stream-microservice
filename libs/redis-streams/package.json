@@ -1,7 +1,7 @@
 {
   "name": "nestjs-redis-stream-microservice",
-  "version": "0.0.5",
-  "description": "",
+  "version": "1.0.0",
+  "description": "Redis Streams Transport for NestJS",
   "author": "KIMBEOBWOO <https://github.com/KIMBEOBWOO>",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -9,6 +9,14 @@
     "clean": "rm -rf ./dist",
     "build": "npm run clean && tsc -p tsconfig.build.json"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KIMBEOBWOO/nestjs-redis-stream-microservice"
+  },
+  "bugs": {
+    "url": "https://github.com/KIMBEOBWOO/nestjs-redis-stream-microservice/issues"
+  },
+  "homepage": "https://github.com/KIMBEOBWOO/nestjs-redis-stream-microservice/tree/master/libs/redis-streams",
   "keywords": [
     "nest",
     "nestjs",
