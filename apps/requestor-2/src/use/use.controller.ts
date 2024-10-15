@@ -1,11 +1,12 @@
-import { Body, Controller, Inject, Param, Post } from '@nestjs/common';
+import { InjectRedisStreamClient } from '@lib/redis-streams';
+import { Body, Controller, Param, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { timeout } from 'rxjs';
 
 @Controller()
-export class Requestor2Controller {
+export class UseController {
   constructor(
-    @Inject('REDIS-STREAM-CLIENT')
+    @InjectRedisStreamClient()
     private readonly clientProxy: ClientProxy,
   ) {}
 

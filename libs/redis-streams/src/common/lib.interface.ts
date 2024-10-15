@@ -67,3 +67,5 @@ export interface RedisStreamIncommingRequest extends IncomingRequest {
 export interface OutboundRedisStreamMessageSerializationOption {
   correlationId?: string;
 }
+
+export interface RedisStreamClientModuleOptions extends ClientConstructorOptions {}
