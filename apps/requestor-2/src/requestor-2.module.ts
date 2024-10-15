@@ -1,22 +1,20 @@
-import { RedisStreamClient } from '@lib/redis-streams';
+import { RedisStreamClientModule } from '@lib/redis-streams/module';
 import { Module } from '@nestjs/common';
-import { Requestor2Controller } from './requestor-2.controller';
+import { UseModule } from './use/use.module';
 
 @Module({
-  controllers: [Requestor2Controller],
-  providers: [
-    {
-      provide: 'REDIS-STREAM-CLIENT',
-      useFactory: () => {
-        return new RedisStreamClient({
-          connection: {
-            host: '127.0.0.1',
-            port: 6388,
-            password: 'beobwoo',
-          },
-        });
-      },
-    },
+  imports: [
+    RedisStreamClientModule.registerAsync({
+      useFactory: () => ({
+        connection: {
+          host: '127.0.0.1',
+          port: 6388,
+          password: 'beobwoo',
+        },
+      }),
+    }),
+    UseModule,
   ],
+  providers: [],
 })
 export class Requestor2Module {}
