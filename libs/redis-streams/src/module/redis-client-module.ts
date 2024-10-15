@@ -41,7 +41,6 @@ export class RedisStreamClientModule extends ConfigurableModuleClass {
       module.providers.push({
         provide: redisClientToken,
         useFactory: async (option: any) => {
-          console.log('option', option);
           return new RedisStreamClient(option);
         },
         inject: [MODULE_OPTIONS_TOKEN],
@@ -55,8 +54,9 @@ export class RedisStreamClientModule extends ConfigurableModuleClass {
 
       module.providers.push({
         provide: redisClientToken,
-        useFactory: async (optionsFactory: any) =>
-          new RedisStreamClient(await optionsFactory.createOptions()),
+        useFactory: async (optionsFactory: any) => {
+          return new RedisStreamClient(await optionsFactory.create());
+        },
         inject: inject,
       });
     }
