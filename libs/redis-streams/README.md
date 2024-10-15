@@ -21,8 +21,8 @@
 
 - [Installation](#installation)
 - [Introduce](#introduce)
-    - [NestJs Basic Redis Pub/Sub transporter Problems](#nestjs-basic-redis-pubsub-transporter-problems)
-    - [What I wanted to improve from the library I referenced](#what-i-wanted-to-improve-from-the-libraryhttpsgithubcomtamimajnestjs-redis-streams-i-referenced)
+  - [NestJs Basic Redis Pub/Sub transporter Problems](#nestjs-basic-redis-pubsub-transporter-problems)
+  - [What I wanted to improve from the library I referenced](#what-i-wanted-to-improve-from-the-libraryhttpsgithubcomtamimajnestjs-redis-streams-i-referenced)
   - [Structure & Concept](#structure--concept)
 - [Usage](#usage)
   - [Client Mode (Requestor App)](#client-mode-requestor-app)
@@ -104,27 +104,36 @@ Basically, it is designed to leverage Redis Stream capabilities to implement the
 ```typescript
 // each module that you want to send a message to
 @Module({
-  providers: [
-    {
-      provide: 'REDIS-STREAM-CLIENT',
-      useFactory: () => {
-        return new RedisStreamClient({
-          connection: {
-            host: '127.0.0.1',
-            port: 6388,
-            password: 'beobwoo',
-          },
-        });
+  imports: [
+    // sync mode
+    RedisStreamClientModule.register({
+      connection: {
+        host: '127.0.0.1',
+        port: 6388,
+        password: 'beobwoo',
       },
-    },
+    }),
+
+    // async mode
+    RedisStreamClientModule.registerAsync({
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('HOST'),
+          port: configService.get('PORT'),
+          password: configService.get('PASSWORD'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
   ],
 })
-export class UserModule {}
+export class AppModule {}
 ```
 
 > **Note** : When using client mode, it will be modified so that it can only be registered once in the root module globally.
 
 - If necessary, you can register **using environment variables** according to the [nestjs Factory Provider registration](https://docs.nestjs.com/fundamentals/custom-providers) method.
+- The module registers the [RedisStreamClient(ClientFroxy) instance](#3-send-the-message-to-the-server-using-the-client) globally.
 
 ### (2) Enable `shutDownHook` in `main.ts`
 
@@ -149,7 +158,7 @@ async function bootstrap() {
 import { ClientProxy } from '@nestjs/microservices';
 
 constructor(
-  @Inject('REDIS-STREAM-CLIENT')
+  @InjectRedisStreamClient()
   private readonly client: ClientProxy,
 ) {}
 ```
@@ -164,7 +173,7 @@ If you received the client instance that you registered in course 1, you can use
 @Controller()
 export class Requestor1Controller {
   constructor(
-    @Inject('REDIS-STREAM-CLIENT')
+    @InjectRedisStreamClient()
     private readonly client: ClientProxy,
   ) {}
 
@@ -182,7 +191,7 @@ export class Requestor1Controller {
 @Controller()
 export class Requestor1Controller {
   constructor(
-    @Inject('REDIS-STREAM-CLIENT')
+    @InjectRedisStreamClient()
     private readonly client: ClientProxy,
   ) {}
 
