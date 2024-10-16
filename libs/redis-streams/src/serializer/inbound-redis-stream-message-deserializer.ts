@@ -30,9 +30,10 @@ export class InboundRedisStreamMessageDeserializer implements Deserializer {
       };
     }
 
-    const libHeader = data[DEFAULT_LIB_MESSAGE_HEADER];
-    const correlationId = libHeader?.correlationId;
-    const isArray = libHeader?.isArray;
+    const header = data[DEFAULT_LIB_MESSAGE_HEADER];
+    const correlationId = header?.correlationId;
+    const isArray = header?.isArray;
+    const isPrimitive = header?.isPrimitive;
     delete data[DEFAULT_LIB_MESSAGE_HEADER];
 
     if (isArray) {
@@ -45,6 +46,15 @@ export class InboundRedisStreamMessageDeserializer implements Deserializer {
         pattern: stream,
         id,
         data: convertedData,
+        correlationId,
+      };
+    }
+
+    if (isPrimitive) {
+      return {
+        pattern: stream,
+        id,
+        data: data[0],
         correlationId,
       };
     }
