@@ -22,6 +22,8 @@ export class InboundRedisStreamMessageDeserializer implements Deserializer {
     const id = message[0];
     const data = this.rawMessageToJson(message[1]);
 
+    console.dir(value[1], { depth: null });
+
     if (!data[DEFAULT_LIB_MESSAGE_HEADER]) {
       return {
         pattern: stream,
@@ -33,6 +35,7 @@ export class InboundRedisStreamMessageDeserializer implements Deserializer {
     const libHeader = data[DEFAULT_LIB_MESSAGE_HEADER];
     const correlationId = libHeader?.correlationId;
     const isArray = libHeader?.isArray;
+    const isPrimitive = libHeader?.isPrimitive;
     delete data[DEFAULT_LIB_MESSAGE_HEADER];
 
     if (isArray) {
@@ -45,6 +48,13 @@ export class InboundRedisStreamMessageDeserializer implements Deserializer {
         pattern: stream,
         id,
         data: convertedData,
+        correlationId,
+      };
+    } else if (isPrimitive) {
+      return {
+        pattern: stream,
+        id,
+        data: data[0],
         correlationId,
       };
     }
