@@ -418,5 +418,16 @@ describe('RedisStreamServer', () => {
       expect(loggerSpy).toHaveBeenCalledTimes(1);
       expect(loggerSpy).toHaveBeenCalledWith(error);
     });
+
+    it('should call logger.log finally', async () => {
+      // given
+      const loggerSpy = jest.spyOn(server['logger'], 'log');
+
+      // when
+      await server.close();
+
+      // then
+      expect(loggerSpy).toHaveBeenCalledWith('Redis Stream Server is closed');
+    });
   });
 });

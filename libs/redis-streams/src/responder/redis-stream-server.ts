@@ -126,10 +126,14 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
             this.options.consumer,
           );
         }
+
+        this.logger.log(`Consumer "${this.options.consumer}" is deleted`);
       }
       this.clientManager.close();
     } catch (e) {
       this.logger.error(e);
+    } finally {
+      this.logger.log('Redis Stream Server is closed');
     }
   }
 }
