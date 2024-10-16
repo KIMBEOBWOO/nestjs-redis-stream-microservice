@@ -113,6 +113,18 @@ describe('RedisStreamServer', () => {
       expect(listenToStreamSpy).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledTimes(1);
     });
+
+    it('should call logger.log after onConnect', () => {
+      // given
+      const loggerSpy = jest.spyOn(server['logger'], 'log');
+
+      // when
+      server.listen(callback);
+
+      // then
+      expect(loggerSpy).toHaveBeenCalledTimes(1);
+      expect(loggerSpy).toHaveBeenCalledWith('Redis Stream Server is listening');
+    });
   });
 
   describe('bindHandlers', () => {
@@ -132,7 +144,7 @@ describe('RedisStreamServer', () => {
       expect(createConsumerGroupSpy).toHaveBeenCalledWith('stream2', 'cg');
     });
 
-    it('should log error if any', async () => {
+    it('should logger.error if any error occurs', async () => {
       // given
       const error = new Error('TEST_ERROR');
       jest.spyOn(server['controlManager'] as any, 'createConsumerGroup').mockRejectedValue(error);
@@ -144,6 +156,23 @@ describe('RedisStreamServer', () => {
       // then
       expect(loggerSpy).toHaveBeenCalledTimes(1);
       expect(loggerSpy).toHaveBeenCalledWith(error);
+    });
+
+    it('should call logger.log if stream key has bounded to consumer group', async () => {
+      // given
+      const loggerSpy = jest.spyOn(server['logger'], 'log');
+
+      // when
+      await (server as any).bindHandlers();
+
+      // then
+      expect(loggerSpy).toHaveBeenCalledTimes(messageHandlers.size);
+      const keys = Array.from(messageHandlers.keys());
+      for (const key of keys) {
+        expect(loggerSpy).toHaveBeenCalledWith(
+          `Consumer Group "${options.option.consumerGroup}" is bound to "${key}"`,
+        );
+      }
     });
   });
 
@@ -388,6 +417,17 @@ describe('RedisStreamServer', () => {
       // then
       expect(loggerSpy).toHaveBeenCalledTimes(1);
       expect(loggerSpy).toHaveBeenCalledWith(error);
+    });
+
+    it('should call logger.log finally', async () => {
+      // given
+      const loggerSpy = jest.spyOn(server['logger'], 'log');
+
+      // when
+      await server.close();
+
+      // then
+      expect(loggerSpy).toHaveBeenCalledWith('Redis Stream Server is closed');
     });
   });
 });

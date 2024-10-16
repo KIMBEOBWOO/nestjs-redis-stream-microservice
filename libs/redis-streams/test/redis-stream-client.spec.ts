@@ -249,5 +249,19 @@ describe('RedisStreamClient', () => {
       expect(loggerSpy).toHaveBeenCalledTimes(1);
       expect(loggerSpy).toHaveBeenCalledWith(error);
     });
+
+    it('should call logger.log if all success', async () => {
+      // given
+      const loggerSpy = jest.spyOn(client['logger'], 'log');
+
+      // when
+      await client.onApplicationShutdown();
+
+      // then
+      expect(loggerSpy).toHaveBeenCalledTimes(1);
+      expect(loggerSpy).toHaveBeenCalledWith(
+        `Redis Stream Client is closed, remove consumer group test-uuid and consumer test-uuid`,
+      );
+    });
   });
 });

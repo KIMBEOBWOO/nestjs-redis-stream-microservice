@@ -40,6 +40,8 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
       consumer: v4(),
     };
     this.initManager();
+
+    this.logger.log('Redis Stream Client is listening');
   }
 
   initManager() {
@@ -161,6 +163,10 @@ export class RedisStreamClient extends ClientProxy implements OnApplicationShutd
       this.close();
     } catch (e) {
       this.logger.error(e);
+    } finally {
+      this.logger.log(
+        `Redis Stream Client is closed, remove consumer group ${this.options.consumerGroup} and consumer ${this.options.consumer}`,
+      );
     }
   }
 }
