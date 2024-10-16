@@ -112,10 +112,6 @@ describe('OutboundRedisStreamMessageSerializer', () => {
         expected: 'true',
       },
       {
-        input: undefined,
-        expected: undefined,
-      },
-      {
         input: null,
         expected: 'null',
       },
@@ -131,6 +127,15 @@ describe('OutboundRedisStreamMessageSerializer', () => {
         expect(result).toEqual(['0', expected, DEFAULT_LIB_MESSAGE_HEADER, '{"isPrimitive":true}']);
       },
     );
+
+    // NOTE : @nestjs/microservices does not support undefined type (rxjs does not support undefined type)
+    it.skip('should contain isArray in lib header when undefined is provided', async () => {
+      // when
+      const result = serializer.serialize(undefined);
+
+      // then
+      expect(result).toEqual([DEFAULT_LIB_MESSAGE_HEADER, '{"isEmpty":true}']);
+    });
 
     it.each(primitiveTypes)(
       'should contain isPrimitive in lib header when value is primitive',

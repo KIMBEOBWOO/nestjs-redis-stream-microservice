@@ -15,7 +15,7 @@ export class OutboundRedisStreamMessageSerializer implements Serializer {
     if (this.isPrimitive(value)) {
       data.push('0');
       data.push(typeof value === 'string' ? value : JSON.stringify(value));
-    } else {
+    } else if (this.isObject(value)) {
       data.push(
         ...Object.entries(value).reduce((acc, [key, val]) => {
           acc.push(key);
@@ -25,25 +25,35 @@ export class OutboundRedisStreamMessageSerializer implements Serializer {
       );
     }
 
-    const libHeader = {};
-    if (options?.correlationId) {
-      libHeader['correlationId'] = options.correlationId;
-    }
+    const header = this.getHeader(value, options);
 
-    if (Array.isArray(value)) {
-      libHeader['isArray'] = true;
-    }
-
-    if (this.isPrimitive(value)) {
-      libHeader['isPrimitive'] = true;
-    }
-
-    if (Object.keys(libHeader).length > 0) {
+    if (Object.keys(header).length > 0) {
       data.push(DEFAULT_LIB_MESSAGE_HEADER);
-      data.push(JSON.stringify(libHeader));
+      data.push(JSON.stringify(header));
     }
 
     return data;
+  }
+
+  private getHeader(value: any, options?: OutboundRedisStreamMessageSerializationOption) {
+    const header = {};
+    if (options?.correlationId) {
+      header['correlationId'] = options.correlationId;
+    }
+
+    if (Array.isArray(value)) {
+      header['isArray'] = true;
+    }
+
+    if (this.isPrimitive(value)) {
+      header['isPrimitive'] = true;
+    }
+
+    return header;
+  }
+
+  private isObject(value: any): boolean {
+    return typeof value === 'object' && value !== null;
   }
 
   private isPrimitive(value: any): boolean {
@@ -51,8 +61,7 @@ export class OutboundRedisStreamMessageSerializer implements Serializer {
       typeof value === 'string' ||
       typeof value === 'number' ||
       typeof value === 'boolean' ||
-      value === null ||
-      value === undefined
+      value === null
     );
   }
 }
