@@ -55,15 +55,17 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
     this.clientManager.onError((e: Error) => {
       this.logger.error(e);
     });
+    this.logger.log('Redis Stream Server is listening');
   }
 
   private async bindHandlers() {
     try {
       const streamKeys = Array.from(this.messageHandlers.keys());
       await Promise.all(
-        streamKeys.map((stream) =>
-          this.controlManager.createConsumerGroup(stream, this.options.consumerGroup),
-        ),
+        streamKeys.map(async (stream) => {
+          await this.controlManager.createConsumerGroup(stream, this.options.consumerGroup);
+          this.logger.log(`Consumer Group "${this.options.consumerGroup}" is bound to "${stream}"`);
+        }),
       );
     } catch (e) {
       this.logger.error(e);
@@ -124,10 +126,14 @@ export class RedisStreamServer extends Server implements CustomTransportStrategy
             this.options.consumer,
           );
         }
+
+        this.logger.log(`Consumer "${this.options.consumer}" is deleted`);
       }
       this.clientManager.close();
     } catch (e) {
       this.logger.error(e);
+    } finally {
+      this.logger.log('Redis Stream Server is closed');
     }
   }
 }

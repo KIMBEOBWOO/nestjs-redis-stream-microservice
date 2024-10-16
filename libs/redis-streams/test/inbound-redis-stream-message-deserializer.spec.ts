@@ -245,6 +245,45 @@ describe('InboundRedisStreamMessageDeserializer', () => {
       });
     });
 
+    const primitiveTypes = [
+      {
+        input: ['0', 'string value', DEFAULT_LIB_MESSAGE_HEADER, '{"isPrimitive":true}'],
+        expected: 'string value',
+      },
+      {
+        input: ['0', '100', DEFAULT_LIB_MESSAGE_HEADER, '{"isPrimitive":true}'],
+        expected: 100,
+      },
+      {
+        input: ['0', 'true', DEFAULT_LIB_MESSAGE_HEADER, '{"isPrimitive":true}'],
+        expected: true,
+      },
+      {
+        input: ['0', 'null', DEFAULT_LIB_MESSAGE_HEADER, '{"isPrimitive":true}'],
+        expected: null,
+      },
+      // NOTE : undefined is not supported in redis stream? (not sure)
+      {
+        input: ['0', undefined, DEFAULT_LIB_MESSAGE_HEADER, '{"isPrimitive":true}'],
+        expected: undefined,
+      },
+    ];
+
+    it.each(primitiveTypes)(
+      'should deserialize stream data when Primitive Value is provided',
+      async ({ input, expected }) => {
+        // when
+        const result = deserializer.deserialize(['stream-1', [['stream-id-1', input]]]);
+
+        // then
+        expect(result).toEqual({
+          pattern: 'stream-1',
+          id: 'stream-id-1',
+          data: expected,
+        });
+      },
+    );
+
     it('should set origin data when JSON.parse failed', async () => {
       // given
       const value: RedisStreamData = ['stream-1', [['stream-id-1', ['invalidJson', '{data: 27}']]]];
